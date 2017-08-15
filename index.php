@@ -23,10 +23,10 @@ date_default_timezone_set('UTC');
 error_reporting(0);
 
 // Specify directory for cached files (using FileCache)
-define('CACHE_DIR', __DIR__ . '/cache');
+define('CACHE_DIR', '/var/cache');
 
 // Specify path for whitelist file
-define('WHITELIST_FILE', __DIR__ . '/whitelist.txt');
+define('WHITELIST_FILE', '/var/whitelist.txt');
 
 /*
   Create a file named 'DEBUG' for enabling debug mode.
@@ -276,4 +276,61 @@ EOD;
 		?>
 	</section>
 	</body>
+
+	<script type="text/javascript">
+
+		window.parent.postMessage({
+			powerboxRequest: {
+			  rpcId: 1,
+			  query: [
+			    "EA9QAQEAABEBF1EEAQH/x80lxnnjecgAQAMxCYIBAAH/aHR0cHM6Ly8FYXBpZGF0YS5nb29nbGV1c2VyY29udGVudC5jb20vY2FsZGF2L3YyAA=="
+			  ],
+			  saveLabel: {defaultText: "your calendar, for adding events"},
+			}
+		}, "*");
+
+		window.addEventListener("message", function (event) {
+		  if (event.source !== window.parent) {
+		    // SECURITY: ignore postMessages that didn't come from the parent frame.
+		    return;
+		  }
+
+		  var response = event.data;
+
+		  if (response.rpcId !== 1) {
+		    // Ignore RPC ID that dosen't match our request. (In real code you'd
+		    // probably have a table of outstanding RPCs so that you don't have to
+		    // register a separate handler for each one.)
+		    return;
+		  }
+
+		  if (response.error) {
+		    // Oops, something went wrong.
+		    alert(response.error);
+		    return;
+		  }
+
+		  if (response.canceled) {
+		    // The user closed the Powerbox without making a selection.
+		    return;
+		  }
+
+		  // We now have a claim token. We need to send this to our server
+		  // where we can exchange it for access to the remote API!
+		  doClaimToken(response.token);
+		});
+
+		function doClaimToken(token) {
+			xmlhttp=new XMLHttpRequest();
+
+			xmlhttp.onreadystatechange=function() {
+				if (this.readyState==4 && this.status==200) {
+					alert(this.responseText);
+				}
+			}
+			xmlhttp.open("GET","gettoken.php?q="+token,true);
+			xmlhttp.send();
+		}
+	</script>
+
 </html>
